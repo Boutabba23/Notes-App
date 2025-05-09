@@ -1,16 +1,27 @@
 // src/App.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react'; // Added useCallback
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
+import { useUIStore } from './store/uiStore'; // Import UI Store
 import { getMe as fetchCurrentUser } from './services/authService';
-
+import * as noteService from './services/noteService'; // For note operations
+import type { NoteInput } from './services/noteService';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import Navbar from './components/layout/Navbar';
 import { Loader2 } from 'lucide-react';
 
+// Import Dialog and NoteForm components
+import { Dialog } from "@/components/ui/dialog";
+import NoteForm from "./components/notes/NoteForm"; // Adjust path if necessary
+import toast from 'react-hot-toast'; // For success/error toasts
+import { AxiosError } from 'axios';
+import type { ApiErrorResponse } from '@/types';
+
+
+// ... (ProtectedRoute remains the same)
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
@@ -30,36 +41,63 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  return <>{children}</>; // Return children wrapped in a fragment or directly
+  return <>{children}</>;
 }
 
+
 function App() {
-  const { isAuthenticated, isLoading, token, setUser, logout, setIsLoading: setAuthLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, token, user, setUser, logout, setIsLoading: setAuthLoading } = useAuthStore();
+  const { isNoteFormOpen, currentEditingNote, closeNoteForm } = useUIStore();
+
+  // State for notes needs to be managed here or in a dedicated notes store
+  // to allow DashboardPage and NoteForm submission to interact with it.
+  // For simplicity, we'll manage a "refreshNotes" trigger.
+  // A more robust solution would be a dedicated notes store (e.g., with Zustand).
+  const [refreshTrigger, setRefreshTrigger] = React.useState(0);
+  const triggerRefreshNotes = () => setRefreshTrigger(prev => prev + 1);
+
 
   useEffect(() => {
+    // ... (verifyUserOnLoad logic from previous step)
     const verifyUserOnLoad = async () => {
-      if (token && !isAuthenticated) { // Only run if token exists but user session isn't confirmed
+      if (token && !user) { // Check if user object is not yet set
         setAuthLoading(true);
         try {
           const userData = await fetchCurrentUser();
-          setUser(userData); // This will also set isAuthenticated and isLoading to false
+          setUser(userData);
         } catch (error) {
           console.error("Token verification failed on app load:", error);
-          logout(); // Clears token and user, sets isAuthenticated to false
-        } finally {
-           // setUser or logout already sets isLoading to false
+          logout();
         }
-      } else {
-        // If no token, or already authenticated, ensure loading is false.
-        // Zustand's onRehydrateStorage or initial state handles this for persisted state.
-        // If not relying on persisted state for initial check, then:
+        // No finally setAuthLoading(false) here, setUser in authStore handles it
+      } else if (!token) {
+        // If no token, ensure auth loading is false (if it was somehow true)
          if (isLoading) setAuthLoading(false);
       }
     };
-
     verifyUserOnLoad();
-  }, [token, isAuthenticated, setUser, logout, setAuthLoading, isLoading]);
+  }, [token, user, setUser, logout, setAuthLoading, isLoading]);
 
+
+  const handleGlobalNoteFormSubmit = useCallback(async (noteData: NoteInput) => {
+    // This function will be passed to the globally rendered NoteForm
+    try {
+      if (currentEditingNote && currentEditingNote._id) {
+        await noteService.updateNote(currentEditingNote._id, noteData);
+        toast.success("Note updated successfully!");
+      } else {
+        await noteService.createNote(noteData);
+        toast.success("Note created successfully!");
+      }
+      closeNoteForm();
+      triggerRefreshNotes(); // Tell DashboardPage to re-fetch notes
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      console.error("Global note form submit error:", axiosError.response?.data?.message || axiosError.message);
+      toast.error(axiosError.response?.data?.message || "Failed to save note.");
+      // Optionally, don't close the form on error, or re-throw to let NoteForm handle its loading state
+    }
+  }, [currentEditingNote, closeNoteForm]);
 
   return (
     <Router>
@@ -73,13 +111,28 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                {/* Pass the refreshTrigger to DashboardPage so it can re-fetch notes */}
+                <DashboardPage key={refreshTrigger} />
               </ProtectedRoute>
             }
           />
           <Route path="*" element={<Navigate to={isAuthenticated && !isLoading ? "/" : "/login"} />} />
         </Routes>
       </div>
+
+      {/* Global Note Form Dialog */}
+      <Dialog open={isNoteFormOpen} onOpenChange={(open) => {
+        if (!open) closeNoteForm();
+      }}>
+        {/* Render NoteForm only when dialog is supposed to be open to ensure state resets properly */}
+        {isNoteFormOpen && (
+            <NoteForm
+            onSubmit={handleGlobalNoteFormSubmit}
+            initialData={currentEditingNote}
+            onFinished={closeNoteForm} // For cancel button
+            />
+        )}
+      </Dialog>
     </Router>
   );
 }

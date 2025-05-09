@@ -1,11 +1,13 @@
 // src/components/layout/Navbar.tsx
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useUIStore } from '../../store/uiStore'; // Import UI store
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Notebook } from 'lucide-react';
+import { LogOut, User, Notebook, PlusCircle } from 'lucide-react'; // Import PlusCircle
 
 function Navbar() {
   const { isAuthenticated, user, logout } = useAuthStore();
+  const { openNoteForm } = useUIStore(); // Get action to open form
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -19,15 +21,26 @@ function Navbar() {
         <Link to="/" className="text-2xl font-bold text-primary flex items-center">
           <Notebook className="mr-2 h-6 w-6" /> NotesApp
         </Link>
-        <div className="flex items-center space-x-4">
-          {isAuthenticated && user ? ( // Ensure user is also present
+        <div className="flex items-center space-x-2 sm:space-x-4"> {/* Adjusted spacing */}
+          {isAuthenticated && user ? (
             <>
-              <span className="text-sm hidden sm:inline">Welcome, {user.username}!</span>
+              {/* "Create Note" button in Navbar */}
+              <Button variant="ghost" size="sm" onClick={() => openNoteForm()} className="hidden sm:inline-flex">
+                <PlusCircle className="mr-2 h-4 w-4" /> New Note
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => openNoteForm()} className="sm:hidden" title="New Note">
+                <PlusCircle className="h-5 w-5" />
+              </Button>
+
+              <span className="text-sm hidden md:inline"> {/* Show username on medium screens and up */}
+                Welcome, {user.username}!
+              </span>
               <Button variant="ghost" size="icon" onClick={() => navigate('/')} title="Dashboard">
                 <User className="h-5 w-5" />
               </Button>
               <Button variant="outline" onClick={handleLogout} size="sm">
-                <LogOut className="mr-2 h-4 w-4" /> Logout
+                <LogOut className="mr-0 sm:mr-2 h-4 w-4" /> {/* Hide text on small screens */}
+                <span className="hidden sm:inline">Logout</span>
               </Button>
             </>
           ) : (
