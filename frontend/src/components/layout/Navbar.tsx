@@ -1,4 +1,5 @@
 // src/components/layout/Navbar.tsx
+// The new NavBar With CreateNote Button
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore'; // Import UI store
