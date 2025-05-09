@@ -97,10 +97,10 @@ function DashboardPage() {
           <h1 className="text-3xl font-bold">My Notes</h1>
           {user && <p className="text-muted-foreground">Welcome back, {user.username}!</p>}
         </div>
-        {/* This button now just calls the global store action */}
-        <Button onClick={() => openNoteForm()}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Create Note
-        </Button>
+       {/* This button now just calls the global store action */}
+        {/* <Button onClick={() => openNoteForm()}> */}
+          {/* <PlusCircle className="mr-2 h-4 w-4" /> Create Note */}
+        {/* </Button> */}
       </div>
 
       {/* ... (rest of the JSX for displaying notes and delete dialog) ... */}
