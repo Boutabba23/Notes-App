@@ -3,9 +3,6 @@
 node_modules/
 
 # Environment variables
-.env
-.env.*
-!.env.example # If you have an example env file
 
 # Logs
 logs
