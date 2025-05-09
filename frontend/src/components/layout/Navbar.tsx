@@ -26,18 +26,19 @@ function Navbar() {
           {isAuthenticated && user ? (
             <>
               {/* "Create Note" button in Navbar */}
-              <Button variant="custom" size="sm" onClick={() => openNoteForm()} className="hidden text-primary sm:inline-flex">
-                <PlusCircle className="mr-2 text-amber-500 h-4 w-4" /> New Note
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => openNoteForm()} className="sm:hidden" title="New Note">
-                <PlusCircle className="h-5 w-5" />
-              </Button>
+              
 
               <span className="text-sm hidden md:inline"> {/* Show username on medium screens and up */}
                 Welcome, {user.username}!
               </span>
               <Button variant="ghost" size="icon" onClick={() => navigate('/')} title="Dashboard">
                 <User className="h-5 w-5" />
+              </Button>
+              <Button variant="custom" size="sm" onClick={() => openNoteForm()} className="hidden text-primary sm:inline-flex">
+                <PlusCircle className="mr-2 text-amber-500 h-4 w-4" /> New Note
+              </Button>
+              <Button variant="custom" size="icon" onClick={() => openNoteForm()} className="sm:hidden" title="New Note">
+                <PlusCircle className="h-5 w-5 text-amber-500" />
               </Button>
               <Button variant="destructive" onClick={handleLogout} size="sm">
                 <LogOut className="mr-0 sm:mr-2 h-4 w-4" /> {/* Hide text on small screens */}
