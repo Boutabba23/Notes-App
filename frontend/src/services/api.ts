@@ -12,8 +12,14 @@ const api = axios.create({
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => { // Add type for config
     const token = useAuthStore.getState().token;
+        console.log('[API Interceptor] Token from store:', token); // <<< ADD THIS LOG
+
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+            console.log('[API Interceptor] Authorization header set:', config.headers['Authorization']); // <<< ADD THIS LOG
+
+    } else {
+      console.log('[API Interceptor] No token found in store.'); // <<< ADD THIS LOG
     }
     return config;
   },

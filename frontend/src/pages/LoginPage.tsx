@@ -23,13 +23,24 @@ function LoginPage() {
     setIsSubmitting(true);
     try {
       const data: AuthResponse = await loginUser({ email, password });
+          console.log('[LoginPage] Login API Response Data:', data); // LOG 1
+  if (data && data.token) {
       // data contains _id, username, email, token. We pass the user part to loginToStore.
       const { token, ...userData } = data;
+        console.log('[LoginPage] Attempting to store token:', token); // LOG 2
+      console.log('[LoginPage] User data to store:', userData); // LOG 3
+      
       loginToStore(userData, token);
+       console.log('[LoginPage] Token SHOULD BE stored. Current store state token:', useAuthStore.getState().token); // LOG 4 - Check immediately
       toast.success('Logged in successfully!');
       navigate('/');
+  }else {
+      console.error('[LoginPage] Login response did not include a token:', data);
+      toast.error('Login failed: No token received.');
+    }
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
+      
       console.error("Login error:", axiosError.response?.data?.message || axiosError.message);
       toast.error(axiosError.response?.data?.message || 'Failed to login. Please check your credentials.');
     } finally {
