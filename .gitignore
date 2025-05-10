@@ -17,7 +17,7 @@ Thumbs.db
 .vscode/
 
 # Environment files
-.env
+
 
 # Build outputs (for example, Vite or React)
 dist/
