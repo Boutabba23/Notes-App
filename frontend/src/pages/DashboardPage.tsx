@@ -1,17 +1,14 @@
 // src/pages/DashboardPage.tsx
-import  { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { useUIStore } from '../store/uiStore'; // Import the new UI store
+import { useUIStore } from '../store/uiStore'; // To get searchTerm and openNoteForm action
 import * as noteService from '../services/noteService';
-import type {ApiErrorResponse}  from '@/types';
-import type { Note } from '@/types';
+import type { Note, ApiErrorResponse } from '@/types';
+// NoteInput is primarily used by the global NoteForm, not directly here for form submission logic
 
 import NoteCard from '../components/notes/NoteCard';
-// NoteForm will be rendered globally or in App.tsx now
-// import NoteForm from '../components/notes/NoteForm';
 import { Button } from "@/components/ui/button";
-// Dialog and DialogTrigger for the button on this page will still exist,
-// but the Dialog component containing NoteForm will be global.
+// Input component for search is no longer here; it's in Navbar.tsx
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,25 +20,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import toast from 'react-hot-toast';
-import { PlusCircle, Loader2 } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react'; // Search icon is not needed here
 import { AxiosError } from 'axios';
 
 function DashboardPage() {
   const { user } = useAuthStore();
-  // UI store will manage the form's open state and current note for editing
-  const { openNoteForm } = useUIStore(); // Get the action to open the form
+  // Get searchTerm from the global UI store to filter notes.
+  // openNoteForm is used for the "Create Note" button on this page and for editing notes.
+  const { openNoteForm, searchTerm } = useUIStore();
 
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [noteToDeleteId, setNoteToDeleteId] = useState<string | null>(null);
-  const [isSubmittingDelete, setIsSubmittingDelete] = useState<boolean>(false); // Renamed for clarity
+  const [allNotes, setAllNotes] = useState<Note[]>([]); // Stores all notes fetched from the backend
+  const [isLoading, setIsLoading] = useState<boolean>(true); // For loading notes state
+  const [noteToDeleteId, setNoteToDeleteId] = useState<string | null>(null); // ID of note to be deleted
+  const [isDeleting, setIsDeleting] = useState<boolean>(false); // Loading state for delete operation
 
+  // Callback to fetch all notes for the current user
   const fetchNotes = useCallback(async () => {
-    // ... (fetchNotes logic remains the same)
     setIsLoading(true);
     try {
       const fetchedNotes = await noteService.getNotes();
-      setNotes(fetchedNotes.sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+      // Sort notes by updatedAt in descending order (newest first)
+      setAllNotes(fetchedNotes.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       console.error("Failed to fetch notes:", axiosError.response?.data?.message || axiosError.message);
@@ -51,17 +50,30 @@ function DashboardPage() {
     }
   }, []);
 
+  // useEffect to fetch notes when the component mounts or when the user changes.
+  // The `key` prop on DashboardPage in App.tsx (driven by refreshTrigger) will also cause
+  // this to run on remount, effectively re-fetching notes.
   useEffect(() => {
-    if (user) {
+    if (user) { // Only fetch if a user is logged in
         fetchNotes();
     }
-  }, [fetchNotes, user]);
+  }, [fetchNotes, user]); // Dependencies: fetchNotes callback and user object
 
-  // handleFormSubmit will be passed to the global NoteForm via App.tsx
-  // It needs to be accessible globally or passed down.
-  // For now, we'll define it here and assume it can be called.
-  // This part will require careful wiring in App.tsx.
+  // Memoized array of notes filtered by the searchTerm from the global UI store
+  const filteredNotes = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return allNotes; // If no search term, return all notes
+    }
+    const lowercasedSearchTerm = searchTerm.toLowerCase();
+    // Filter notes based on title, content, or tags containing the search term
+    return allNotes.filter(note =>
+      note.title.toLowerCase().includes(lowercasedSearchTerm) ||
+      note.content.toLowerCase().includes(lowercasedSearchTerm) ||
+      (note.tags && note.tags.some(tag => tag.toLowerCase().includes(lowercasedSearchTerm)))
+    );
+  }, [allNotes, searchTerm]); // Dependencies: allNotes array and the global searchTerm
 
+  // Functions for delete confirmation dialog
   const openDeleteConfirm = (noteId: string) => {
     setNoteToDeleteId(noteId);
   };
@@ -70,77 +82,91 @@ function DashboardPage() {
     setNoteToDeleteId(null);
   };
 
+  // Function to handle the actual deletion of a note
   const handleDeleteNote = async () => {
-    // ... (handleDeleteNote logic remains the same)
     if (!noteToDeleteId) return;
-    setIsSubmittingDelete(true);
+    setIsDeleting(true);
     try {
       await noteService.deleteNote(noteToDeleteId);
-      setNotes(notes.filter(n => n._id !== noteToDeleteId));
       toast.success("Note deleted successfully!");
       closeDeleteConfirm();
+      fetchNotes(); // Re-fetch notes from the server to update the list accurately
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       console.error("Failed to delete note:", axiosError.response?.data?.message || axiosError.message);
       toast.error(axiosError.response?.data?.message || "Could not delete the note.");
     } finally {
-      setIsSubmittingDelete(false);
+      setIsDeleting(false);
     }
   };
 
-  // ... (loading states and JSX remain similar, but the Dialog for NoteForm is removed)
-
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      {/* Page Header: Title and Create Note button */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold">My Notes</h1>
           {user && <p className="text-muted-foreground">Welcome back, {user.username}!</p>}
         </div>
-       {/* This button now just calls the global store action */}
-        {/* <Button onClick={() => openNoteForm()}> */}
-          {/* <PlusCircle className="mr-2 h-4 w-4" /> Create Note */}
-        {/* </Button> */}
+        {/* The search input is now in Navbar.tsx */}
+        <Button onClick={() => openNoteForm(null)} className="flex-shrink-0">
+          <PlusCircle className="mr-2 h-4 w-4" /> Create Note
+        </Button>
       </div>
 
-      {/* ... (rest of the JSX for displaying notes and delete dialog) ... */}
-      {isLoading && notes.length === 0 && (
-        <div className="flex justify-center items-center h-[calc(100vh-10rem)]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" /> <p className="ml-4 text-lg">Loading your notes...</p>
+      {/* Loading state: Displayed when initially fetching notes */}
+      {isLoading && allNotes.length === 0 && (
+        <div className="flex justify-center items-center h-[calc(100vh-15rem)]"> {/* Adjusted height for better centering */}
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="ml-4 text-lg">Loading your notes...</p>
         </div>
       )}
 
-      {!isLoading && notes.length === 0 ? (
+      {/* No notes state: Displayed if loading is done, no notes exist, and no search term is active */}
+      {!isLoading && allNotes.length === 0 && !searchTerm.trim() && (
         <div className="text-center py-10">
           <p className="text-xl text-muted-foreground mb-4">You don't have any notes yet.</p>
-          <Button onClick={() => openNoteForm()} size="lg">
+          <Button onClick={() => openNoteForm(null)} size="lg">
             <PlusCircle className="mr-2 h-5 w-5" /> Create Your First Note
           </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {notes.map((note) => (
+      )}
+
+      {/* No search results state: Displayed if a search term is active but yields no results */}
+      {!isLoading && allNotes.length > 0 && filteredNotes.length === 0 && searchTerm.trim() && (
+         <div className="text-center py-10">
+          <p className="text-xl text-muted-foreground">No notes found matching "{searchTerm}".</p>
+        </div>
+      )}
+
+      {/* Notes Grid: Display filtered notes if any exist */}
+      {filteredNotes.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredNotes.map((note) => (
             <NoteCard
               key={note._id}
               note={note}
-              onEdit={(noteToEdit) => openNoteForm(noteToEdit)} // Pass note for editing
+              onEdit={(noteToEdit) => openNoteForm(noteToEdit)} // Uses global UI store action to open NoteForm
               onDelete={() => openDeleteConfirm(note._id)}
             />
           ))}
         </div>
       )}
 
-      <AlertDialog open={!!noteToDeleteId} onOpenChange={(isOpen) => !isOpen && closeDeleteConfirm()}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!noteToDeleteId} onOpenChange={(isOpen) => { if (!isOpen) closeDeleteConfirm(); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone. This will permanently delete your note.</AlertDialogDescription>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your note.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={closeDeleteConfirm} disabled={isSubmittingDelete}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteNote} disabled={isSubmittingDelete} className="bg-destructive hover:bg-destructive/90">
-              {isSubmittingDelete && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmittingDelete ? 'Deleting...' : 'Yes, delete it'}
+            <AlertDialogCancel onClick={closeDeleteConfirm} disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteNote} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isDeleting ? 'Deleting...' : 'Yes, delete it'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

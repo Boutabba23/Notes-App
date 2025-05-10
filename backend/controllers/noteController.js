@@ -6,13 +6,28 @@ const asyncHandler = require("express-async-handler");
 // @route   GET /api/notes
 // @access  Private
 const getNotes = asyncHandler(async (req, res) => {
-  const notes = await Note.find({ user: req.user._id }).sort({ updatedAt: -1 }); // Sort by most recently updated
+  const { search } = req.query; // Get search term from query params
+  let query = { user: req.user._id };
+
+  if (search && typeof search === 'string' && search.trim() !== '') {
+    const searchRegex = new RegExp(search.trim(), 'i'); // 'i' for case-insensitive
+    query = {
+      ...query,
+      $or: [ // Search in title, content, or tags
+        { title: searchRegex },
+        { content: searchRegex },
+        { tags: searchRegex } // This searches if any tag in the array matches
+      ]
+    };
+  }
+
+  const notes = await Note.find(query).sort({ updatedAt: -1 });
   res.status(200).json(notes);
+
 });
 
-// @desc    Get a single note by ID
-// @route   GET /api/notes/:id
-// @access  Private
+
+// ...
 const getNoteById = asyncHandler(async (req, res) => {
   const note = await Note.findById(req.params.id);
 

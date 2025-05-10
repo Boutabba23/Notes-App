@@ -47,6 +47,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
 
 
 function App() {
+  
   const { isAuthenticated, isLoading, token, user, setUser, logout, setIsLoading: setAuthLoading } = useAuthStore();
   const { isNoteFormOpen, currentEditingNote, closeNoteForm } = useUIStore();
 
@@ -55,6 +56,7 @@ function App() {
   // For simplicity, we'll manage a "refreshNotes" trigger.
   // A more robust solution would be a dedicated notes store (e.g., with Zustand).
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
+  
   const triggerRefreshNotes = () => setRefreshTrigger(prev => prev + 1);
 
 
