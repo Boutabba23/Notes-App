@@ -1,5 +1,5 @@
 // src/pages/AuthCallbackPage.tsx
-import React, { useEffect, useRef } from 'react';
+import  { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { getMe } from '../services/authService'; // To fetch user data with the new token
