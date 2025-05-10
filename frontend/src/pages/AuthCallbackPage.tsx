@@ -40,7 +40,7 @@ function AuthCallbackPage() {
       toast.error('Google authentication failed: No token received.');
       navigate('/login');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, [location, navigate, loginToStore]);
 
   return (

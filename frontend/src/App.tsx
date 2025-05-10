@@ -108,7 +108,7 @@ function App() {
         <Routes>
           <Route path="/login" element={isAuthenticated && !isLoading ? <Navigate to="/" /> : <LoginPage />} />
           <Route path="/signup" element={isAuthenticated && !isLoading ? <Navigate to="/" /> : <SignupPage />} />
-                    <Route path="/auth/callback" element={<AuthCallbackPage />} /> {/* ADD THIS */}
+          <Route path="/auth/callback" element={<AuthCallbackPage />} /> {/* ADD THIS */}
 
           <Route
             path="/"
