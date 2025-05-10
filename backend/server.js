@@ -13,7 +13,10 @@ require("./config/passport-setup");
 
 connectDB();
 const app = express();
-
+// Trust the first proxy (Render's reverse proxy)
+// This allows req.protocol to correctly reflect 'https' even if the
+// internal connection between Render's proxy and your app is http.
+app.set('trust proxy', 1); // <<<<<<<<<<<<<<<<<<< ADD THIS LINE
 // === CORS Configuration ===
 // Define allowed origins.
 // CLIENT_URL_DEV should be 'http://localhost:5173' (or your Vite port)
