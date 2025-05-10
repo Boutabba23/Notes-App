@@ -19,6 +19,7 @@ import NoteForm from "./components/notes/NoteForm"; // Adjust path if necessary
 import toast from 'react-hot-toast'; // For success/error toasts
 import { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '@/types';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 
 
 // ... (ProtectedRoute remains the same)
@@ -107,6 +108,8 @@ function App() {
         <Routes>
           <Route path="/login" element={isAuthenticated && !isLoading ? <Navigate to="/" /> : <LoginPage />} />
           <Route path="/signup" element={isAuthenticated && !isLoading ? <Navigate to="/" /> : <SignupPage />} />
+                    <Route path="/auth/callback" element={<AuthCallbackPage />} /> {/* ADD THIS */}
+
           <Route
             path="/"
             element={

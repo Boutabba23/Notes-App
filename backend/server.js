@@ -1,48 +1,59 @@
 // server.js
-const express = require("express");
 const dotenv = require("dotenv");
+dotenv.config(); // Load env vars first
+
+const express = require("express");
 const cors = require("cors");
-const morgan = require("morgan"); // For logging (optional)
+const passport = require("passport");
+const session = require("express-session");
 const connectDB = require("./config/db");
 const { errorHandler, notFound } = require("./middleware/errorMiddleware");
 
-// Load environment variables
-dotenv.config();
+require("./config/passport-setup"); // Initialize passport configuration
 
-// Connect to MongoDB
 connectDB();
-
 const app = express();
 
-// Middleware
-app.use(cors()); // Enable CORS for all routes
-app.use(express.json()); // To parse JSON request bodies
-app.use(express.urlencoded({ extended: false })); // To parse URL-encoded request bodies
+// CORS (ensure CLIENT_URL_DEV and CLIENT_URL_PROD are in .env)
+const allowedOrigins = [
+  process.env.CLIENT_URL_DEV,
+  process.env.CLIENT_URL_PROD,
+].filter(Boolean);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
-// Morgan logging (optional, for development)
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-// API Routes
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 60 * 60 * 1000 }, // 1 hour for OAuth dance
+  })
+);
+
+app.use(passport.initialize());
+// app.use(passport.session()); // Not strictly needed if callback has session:false and you handle JWT
+
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/notes", require("./routes/noteRoutes"));
 
-// Simple welcome route
-app.get("/", (req, res) => {
-  res.send("Notes App API is running...");
-});
+app.get("/", (req, res) => res.send("API is running..."));
 
-// Custom Error Handling Middleware (should be last)
-app.use(notFound); // Handle 404 errors
-app.use(errorHandler); // Handle other errors
+app.use(notFound);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(
-    `Server running in ${
-      process.env.NODE_ENV || "development"
-    } mode on port ${PORT}`
-  );
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
