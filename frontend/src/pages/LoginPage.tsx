@@ -47,7 +47,7 @@ function LoginPage() {
 
   return (
     // Main container for the two-column layout, covering full height
-    <div className="flex min-h-screen bg-red-50"> {/* Or your desired overall page background */}
+    <div className="flex min-h-screen bg-gray-50"> {/* Or your desired overall page background */}
 
       {/* Left Column: Login Form */}
       <div className="w-full pt-8  h-1/2 md:w-1/2 lg:w-2/5 flex flex-col items-center justify-start  "> {/* Responsive width */}
