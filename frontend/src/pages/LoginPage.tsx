@@ -47,11 +47,11 @@ function LoginPage() {
 
   return (
     // Main container for the two-column layout, covering full height
-    <div className="flex min-h-screen bg-gray-50"> {/* Or your desired overall page background */}
+    <div className="flex min-h-screen bg-red-50"> {/* Or your desired overall page background */}
 
       {/* Left Column: Login Form */}
-      <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col items-center justify-start  "> {/* Responsive width */}
-        <Card className="w-full max-w-md shadow-xl"> {/* Added shadow for better separation */}
+      <div className="w-full pt-8  h-1/2 md:w-1/2 lg:w-2/5 flex flex-col items-center justify-start  "> {/* Responsive width */}
+        <Card className="w-full  max-w-md shadow-xl"> {/* Added shadow for better separation */}
           <CardHeader className="text-center"> {/* Centered header content */}
             <Link to="/" className="inline-block mb-6">
                 {/* You can put your app logo here if you have one */}
@@ -128,7 +128,7 @@ function LoginPage() {
 
       {/* Right Column: Image */}
       {/* Hidden on small screens (md:block) */}
-      <div className="hidden md:flex md:w-1/2 lg:w-3/6 items-center justify-center p-8 bg-gray-50 relative overflow-hidden"> {/* Light tint of primary or another contrasting bg */}
+      <div className="hidden h-1/2  md:flex md:w-1/2 lg:w-3/6 items-start   relative overflow-hidden"> {/* Light tint of primary or another contrasting bg */}
         <img
           src={loginPageImage}
           alt="Person writing notes with inspiration from the sea"
