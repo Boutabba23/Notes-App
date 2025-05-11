@@ -1,5 +1,5 @@
 // src/pages/AuthCallbackPage.tsx
-import React, { useEffect, useRef } from 'react'; // Added React for type on processing.current if needed, though not strictly required for useRef<boolean>
+import  { useEffect, useRef } from 'react'; // Added React for type on processing.current if needed, though not strictly required for useRef<boolean>
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { getMe } from '../services/authService';
