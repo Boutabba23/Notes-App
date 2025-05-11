@@ -58,7 +58,7 @@ function Navbar() {
           aria-label="NotesApp Home"
         >
           <Notebook className="mr-1 sm:mr-2 h-5 w-5 sm:h-6 sm:w-6" />
-          <span className=" xs:inline">NotesApp</span>
+          <span className=" xs:inline">EasyNotes</span>
         </Link>
 
         {/* Search Bar */}
