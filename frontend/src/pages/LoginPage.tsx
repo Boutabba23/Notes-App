@@ -50,13 +50,13 @@ function LoginPage() {
     <div className="flex min-h-screen bg-gray-50"> {/* Or your desired overall page background */}
 
       {/* Left Column: Login Form */}
-      <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col items-center justify-center p-8 sm:p-12"> {/* Responsive width */}
+      <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col items-center justify-start  "> {/* Responsive width */}
         <Card className="w-full max-w-md shadow-xl"> {/* Added shadow for better separation */}
           <CardHeader className="text-center"> {/* Centered header content */}
             <Link to="/" className="inline-block mb-6">
                 {/* You can put your app logo here if you have one */}
                 {/* <img src="/path-to-your-logo.svg" alt="NotesApp Logo" className="h-10 mx-auto" /> */}
-                <h1 className="text-3xl font-bold text-primary">NotesApp</h1>
+                <h1 className="text-3xl font-bold text-primary">EasyNotes</h1>
             </Link>
             <CardTitle className="text-2xl">Welcome Back!</CardTitle>
             <CardDescription>
