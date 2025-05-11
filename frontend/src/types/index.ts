@@ -3,6 +3,7 @@ export interface User {
   _id: string;
   username: string;
   email: string;
+  profilePicture?: string | null; // <<<< ADD THIS (optional or nullable)
   createdAt?: string; // Optional from backend, select:false
   updatedAt?: string; // Optional from backend
 }
@@ -12,6 +13,8 @@ export interface AuthResponse {
   username: string;
   email: string;
   token: string;
+  profilePicture?: string | null; // <<<< ADD THIS if your traditional login/signup also return it
+
 }
 
 export interface Note {

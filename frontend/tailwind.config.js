@@ -16,6 +16,7 @@ export default {
       padding: "2rem",
       screens: {
         "2xl": "1400px",
+        xs: "400px", // Example: screens wider than 400px
       },
     },
     extend: {

@@ -22,6 +22,7 @@ passport.use(
       try {
         const email = profile.emails?.[0]?.value;
         const googleId = profile.id;
+        const photoUrl = profile.photos?.[0]?.value; // <<< GET PHOTO URL
 
         if (!email || !googleId) {
           return done(new Error("Google profile missing email or ID"), null);
@@ -34,7 +35,7 @@ passport.use(
           if (user) {
             // User exists by email, link googleId
             user.googleId = googleId;
-            // user.profilePicture = profile.photos?.[0]?.value || user.profilePicture;
+            user.profilePicture = photoUrl || user.profilePicture; // Update if new photo available
             await user.save();
           } else {
             // New user
@@ -44,13 +45,20 @@ passport.use(
             const existingUsername = await User.findOne({ username });
             if (existingUsername) {
               username = `${username}${Math.floor(Math.random() * 1000)}`;
+            } else {
+              user = new User({
+                googleId,
+                email,
+                username,
+                profilePicture: photoUrl, // <<< SAVE PHOTO URL FOR NEW USER
+              });
+              await user.save();
             }
-            user = new User({
-              googleId,
-              email,
-              username,
-              // profilePicture: profile.photos?.[0]?.value,
-            });
+          }
+        } else {
+          // User found by googleId, optionally update their photo if it changed or wasn't set
+          if (photoUrl && user.profilePicture !== photoUrl) {
+            user.profilePicture = photoUrl;
             await user.save();
           }
         }

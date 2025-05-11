@@ -1,62 +1,59 @@
 // src/pages/SignupPage.tsx
 import React, { useState } from 'react';
-import {  Link } from 'react-router-dom';
-// import { useAuthStore } from '../store/authStore'; // Not strictly needed if signup goes via Google
-// import { signupUser } from '../services/authService'; // For traditional email/password signup
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import toast from 'react-hot-toast';
-// import { AuthResponse, ApiErrorResponse } from '@/types'; // For traditional signup
-// import { AxiosError } from 'axios'; // For traditional signup
 
-// Import for Google Icon and API URL
-import { FaGoogle } from 'react-icons/fa'; // Make sure you've run: npm install react-icons
+// Import Sonner's toast function
+import { toast as sonnerToast } from 'sonner'; // Or your preferred alias
+
+import type { AuthResponse, ApiErrorResponse } from '@/types';
+import { AxiosError } from 'axios';
 import { API_URL } from '@/config';
+import { useAuthStore } from '@/store/authStore';
+import { signupUser } from '@/services/authService'; // For traditional email/password signup
 
 function SignupPage() {
-  const [username, setUsername] = useState<string>(''); // Keep if you have a separate username step after Google auth, or remove
-  const [email, setEmail] = useState<string>('');     // Keep for traditional form, or remove
-  const [password, setPassword] = useState<string>(''); // Keep for traditional form, or remove
+  const [username, setUsername] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  // const navigate = useNavigate(); // Keep if traditional form is present
-  // const { signup: signupToStore } = useAuthStore(); // For traditional signup
+  const navigate = useNavigate();
+  const { signup: signupToStore } = useAuthStore();
 
-  // Handler for traditional Email/Password Signup
   const handleEmailPasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // If you are keeping email/password signup, this logic remains:
-    // For "Gmail only", you would remove this or comment it out.
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
+      // Use Sonner for error toast
+      sonnerToast.error("Password must be at least 6 characters long.");
       return;
     }
     setIsSubmitting(true);
     try {
-      // const data: AuthResponse = await signupUser({ username, email, password });
-      // const { token, ...userData } = data;
-      // signupToStore(userData, token);
-      // toast.success('Account created successfully! Logging you in...');
-      // navigate('/');
-      console.log("Traditional signup submitted - implement if needed");
-      toast("Email/Password signup is placeholder."); // Placeholder
+      const data: AuthResponse = await signupUser({ username, email, password });
+      const { token, ...userData } = data;
+      signupToStore(userData, token);
+      // Use Sonner for success toast
+      sonnerToast.success('Account created successfully! Logging you in...');
+      navigate('/');
+      // The placeholder toast below can be removed or updated if this form is actively used
+      // console.log("Traditional signup submitted - implement if needed");
+      // sonnerToast("Email/Password signup is placeholder."); // Example of default sonner toast
     } catch (error) {
-      // const axiosError = error as AxiosError<ApiErrorResponse>;
-      // console.error("Signup error:", axiosError.response?.data?.message || axiosError.message);
-      // toast.error(axiosError.response?.data?.message || 'Failed to create account.');
-      console.error("Traditional signup error:", error);
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      console.error("Signup error:", axiosError.response?.data?.message || axiosError.message);
+      // Use Sonner for error toast
+      sonnerToast.error(axiosError.response?.data?.message || 'Failed to create account.');
+      // console.error("Traditional signup error:", error); // Covered by the line above
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handler for Google Signup/Login
   const handleGoogleSignup = () => {
-    // Redirect to your backend's Google auth route.
-    // This is the same flow as Google Login. Your backend handles
-    // creating a new user if they don't exist, or logging them in if they do.
-    setIsSubmitting(true); // Optional: show loading state
+    setIsSubmitting(true);
     window.location.href = `${API_URL}/auth/google`;
   };
 
@@ -70,9 +67,15 @@ function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Google Signup Button */}
           <Button variant="outline" className="w-full" onClick={handleGoogleSignup} disabled={isSubmitting}>
-            <FaGoogle className="mr-2 h-4 w-4" /> Sign up with Google
+            <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" fill-rule="evenodd">
+    <path d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9.1818v3.4818h4.7909c-.2045.9954-.8136 2.0181-1.9091 2.7954v2.2681h2.9091c1.7045-1.5681 2.6864-3.8727 2.6864-6.7045z" fill="#4285F4"/>
+    <path d="M9.1818 18c2.4455 0 4.4955-.8091 5.9955-2.1818l-2.9091-2.2681c-.8091.5454-1.8409.8727-3.0864.8727-2.3591 0-4.3636-1.5864-5.0864-3.7091H1.0909v2.3318C2.5864 16.0955 5.6318 18 9.1818 18z" fill="#34A853"/>
+    <path d="M4.0955 10.7318c-.1909-.5454-.3-.9681-.3-1.4954s.1091-.95.3-1.4954V5.4091H1.0909C.4273 6.65.0091 8.0045.0091 9.2364c0 1.2318.4182 2.5863 1.0818 3.8318l3-2.3364z" fill="#FBBC05"/>
+    <path d="M9.1818 3.5955c1.3227 0 2.5181.4591 3.4545 1.3636l2.5864-2.5864C13.6727.8318 11.6227 0 9.1818 0 5.6318 0 2.5864 1.9045 1.0909 4.7318L4.0955 7.068c.7227-2.1227 2.7273-3.709 5.0864-3.709z" fill="#EA4335"/>
+  </g>
+</svg> Sign up with Google
           </Button>
 
           <div className="relative">
@@ -86,10 +89,9 @@ function SignupPage() {
             </div>
           </div>
 
-          {/* Email/Password Signup Form (Keep or remove based on "Gmail only" decision) */}
           <form onSubmit={handleEmailPasswordSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username-signup">Username</Label> {/* Ensure unique ID if also on login page */}
+              <Label htmlFor="username-signup">Username</Label>
               <Input
                 id="username-signup"
                 type="text"

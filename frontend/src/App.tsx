@@ -1,28 +1,29 @@
 // src/App.tsx
-import React, { useEffect, useCallback } from 'react'; // Added useCallback
+import React, { useEffect, useCallback, useState } from 'react'; // Added useState for refreshTrigger
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
-import { useUIStore } from './store/uiStore'; // Import UI Store
+import { useUIStore } from './store/uiStore';
 import { getMe as fetchCurrentUser } from './services/authService';
-import * as noteService from './services/noteService'; // For note operations
-import type { NoteInput } from './services/noteService';
+import * as noteService from './services/noteService';
+import type { NoteInput } from './services/noteService'; // Ensure this type is correctly defined
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import Navbar from './components/layout/Navbar';
 import { Loader2 } from 'lucide-react';
-
-// Import Dialog and NoteForm components
 import { Dialog } from "@/components/ui/dialog";
-import NoteForm from "./components/notes/NoteForm"; // Adjust path if necessary
-import toast from 'react-hot-toast'; // For success/error toasts
-import { AxiosError } from 'axios';
-import type { ApiErrorResponse } from '@/types';
+import NoteForm from "./components/notes/NoteForm";
 import AuthCallbackPage from './pages/AuthCallbackPage';
 
+// --- Sonner Imports ---
+import { Toaster as SonnerToaster, toast as sonnerToast } from 'sonner'; // Correct import for triggering toasts
+// If you used `npx shadcn-ui@latest add sonner`, you might use the shadcn/ui wrapper for <Toaster />
+// import { Toaster as ShadCNToaster } from "@/components/ui/sonner"; // Use this if you prefer the shadcn wrapper
 
-// ... (ProtectedRoute remains the same)
+import { AxiosError } from 'axios';
+import type { ApiErrorResponse } from '@/types';
+
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
@@ -47,23 +48,17 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
 
 
 function App() {
-  
   const { isAuthenticated, isLoading, token, user, setUser, logout, setIsLoading: setAuthLoading } = useAuthStore();
   const { isNoteFormOpen, currentEditingNote, closeNoteForm } = useUIStore();
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Changed to useState
 
-  // State for notes needs to be managed here or in a dedicated notes store
-  // to allow DashboardPage and NoteForm submission to interact with it.
-  // For simplicity, we'll manage a "refreshNotes" trigger.
-  // A more robust solution would be a dedicated notes store (e.g., with Zustand).
-  const [refreshTrigger, setRefreshTrigger] = React.useState(0);
-  
-  const triggerRefreshNotes = () => setRefreshTrigger(prev => prev + 1);
+  // Memoize triggerRefreshNotes to prevent unnecessary re-renders if passed as prop
+  const triggerRefreshNotes = useCallback(() => setRefreshTrigger(prev => prev + 1), []);
 
 
   useEffect(() => {
-    // ... (verifyUserOnLoad logic from previous step)
     const verifyUserOnLoad = async () => {
-      if (token && !user) { // Check if user object is not yet set
+      if (token && !user) {
         setAuthLoading(true);
         try {
           const userData = await fetchCurrentUser();
@@ -72,10 +67,8 @@ function App() {
           console.error("Token verification failed on app load:", error);
           logout();
         }
-        // No finally setAuthLoading(false) here, setUser in authStore handles it
-      } else if (!token) {
-        // If no token, ensure auth loading is false (if it was somehow true)
-         if (isLoading) setAuthLoading(false);
+      } else if (!token && isLoading) { // Ensure loading is false if no token and was loading
+         setAuthLoading(false);
       }
     };
     verifyUserOnLoad();
@@ -83,40 +76,40 @@ function App() {
 
 
   const handleGlobalNoteFormSubmit = useCallback(async (noteData: NoteInput) => {
-    // This function will be passed to the globally rendered NoteForm
     try {
       if (currentEditingNote && currentEditingNote._id) {
         await noteService.updateNote(currentEditingNote._id, noteData);
-        toast.success("Note updated successfully!");
+        sonnerToast.success("Note updated successfully!"); // Use sonnerToast.success()
       } else {
         await noteService.createNote(noteData);
-        toast.success("Note created successfully!");
+        sonnerToast.success("Note created successfully!"); // Use sonnerToast.success()
       }
       closeNoteForm();
-      triggerRefreshNotes(); // Tell DashboardPage to re-fetch notes
+      triggerRefreshNotes();
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
       console.error("Global note form submit error:", axiosError.response?.data?.message || axiosError.message);
-      toast.error(axiosError.response?.data?.message || "Failed to save note.");
-      // Optionally, don't close the form on error, or re-throw to let NoteForm handle its loading state
+      sonnerToast.error(axiosError.response?.data?.message || "Failed to save note."); // Use sonnerToast.error()
     }
-  }, [currentEditingNote, closeNoteForm]);
+  }, [currentEditingNote, closeNoteForm, triggerRefreshNotes]); // Added triggerRefreshNotes
 
   return (
     <Router>
-      <Toaster position="top-right" reverseOrder={false} />
+      {/* Sonner's Toaster component - place it high in your component tree */}
+      {/* If using shadcn/ui wrapper: <ShadCNToaster richColors position="top-right" /> */}
+      <SonnerToaster richColors position="bottom-right" />
+
       <Navbar />
-      <div className="container mx-auto p-4 mt-16">
+      <div className="container mx-auto p-4 mt-16 min-h-[calc(100vh-4rem)] bg-gray-50"> {/* Ensure bg covers area */}
         <Routes>
           <Route path="/login" element={isAuthenticated && !isLoading ? <Navigate to="/" /> : <LoginPage />} />
           <Route path="/signup" element={isAuthenticated && !isLoading ? <Navigate to="/" /> : <SignupPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} /> {/* ADD THIS */}
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
           <Route
             path="/"
             element={
               <ProtectedRoute>
-                {/* Pass the refreshTrigger to DashboardPage so it can re-fetch notes */}
                 <DashboardPage key={refreshTrigger} />
               </ProtectedRoute>
             }
@@ -125,16 +118,12 @@ function App() {
         </Routes>
       </div>
 
-      {/* Global Note Form Dialog */}
-      <Dialog open={isNoteFormOpen} onOpenChange={(open) => {
-        if (!open) closeNoteForm();
-      }}>
-        {/* Render NoteForm only when dialog is supposed to be open to ensure state resets properly */}
+      <Dialog open={isNoteFormOpen} onOpenChange={(open) => { if (!open) closeNoteForm(); }}>
         {isNoteFormOpen && (
             <NoteForm
             onSubmit={handleGlobalNoteFormSubmit}
             initialData={currentEditingNote}
-            onFinished={closeNoteForm} // For cancel button
+            onFinished={closeNoteForm}
             />
         )}
       </Dialog>
