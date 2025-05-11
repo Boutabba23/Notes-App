@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.tsx
-import React, { useEffect, useState, useCallback, useMemo } from 'react'; // Added React for useState
+import  { useEffect, useState, useCallback, useMemo } from 'react'; // Added React for useState
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore'; // To get searchTerm and openNoteForm action
 import * as noteService from '../services/noteService';

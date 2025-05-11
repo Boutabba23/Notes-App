@@ -12,21 +12,24 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import toast from 'react-hot-toast';
-import type{ Note, ApiErrorResponse } from '@/types';
-import type{ NoteInput } from '@/services/noteService'; // Import NoteInput
+
+// Import Sonner's toast function
+import { toast as sonnerToast } from 'sonner'; // Or your preferred alias
+
+import type { Note, ApiErrorResponse } from '@/types';
+import type { NoteInput } from '@/services/noteService';
 import { AxiosError } from 'axios';
 
 interface NoteFormProps {
-  onSubmit: (noteData: NoteInput) => Promise<void>; // onSubmit now takes NoteInput
-  initialData?: Note | null; // The full Note object for editing
-  onFinished: () => void; // To close dialog or refresh
+  onSubmit: (noteData: NoteInput) => Promise<void>;
+  initialData?: Note | null;
+  onFinished: () => void; // To close dialog or refresh (called by parent on success/cancel)
 }
 
 function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
   const [title, setTitle] = useState<string>('');
   const [content, setContent] = useState<string>('');
-  const [tags, setTags] = useState<string>(''); // Store tags as a comma-separated string for UI
+  const [tags, setTags] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -43,10 +46,15 @@ function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) {
-      toast.error("Title and content cannot be empty.");
+    if (!title.trim()) { // Simplified: just check title as content can sometimes be optional depending on use case
+      sonnerToast.error("Title cannot be empty.");
       return;
     }
+    if (!content.trim()) { // Added check for content as well
+      sonnerToast.error("Content cannot be empty.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const noteData: NoteInput = {
@@ -54,15 +62,26 @@ function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
         content,
         tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0),
       };
-      await onSubmit(noteData); // This will be createNote or updateNote logic in parent
-      // Parent (DashboardPage) will handle success toast and closing
+      await onSubmit(noteData); // Call the parent's onSubmit logic
+      // The parent component (App.tsx's handleGlobalNoteFormSubmit) is now responsible for:
+      // 1. Showing the success toast.
+      // 2. Calling onFinished (which is closeNoteForm from uiStore) to close the dialog.
+      // 3. Triggering a refresh of the notes list.
     } catch (error) {
-      const axiosError = error as AxiosError<ApiErrorResponse>;
-      console.error("Note form error:", axiosError.response?.data?.message || axiosError.message);
-      toast.error(axiosError.response?.data?.message || "Failed to save note.");
+      // This catch block will now primarily handle errors thrown by onSubmit if the parent re-throws,
+      // or if there's an unexpected error within this component before calling onSubmit.
+      // The primary error handling for API calls is now in App.tsx's handleGlobalNoteFormSubmit.
+      const axiosError = error as AxiosError<ApiErrorResponse>; // Type assertion
+      console.error("Note form submission error propagated to NoteForm:", axiosError.response?.data?.message || (error as Error).message);
+      // Display a generic error here, or let the parent handle it.
+      // If parent handles it, this toast might be redundant.
+      // For now, let's assume parent handles API error toasts.
+      // sonnerToast.error(axiosError.response?.data?.message || "Failed to save note. Error in form.");
     } finally {
       setIsLoading(false);
-      // onFinished(); // Parent will call this on success or cancel
+      // We don't call onFinished() here on success anymore because the parent (App.tsx)
+      // will call it after its own success toast and refresh logic.
+      // onFinished() is still used by the "Cancel" button directly.
     }
   };
 
@@ -76,9 +95,9 @@ function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4 py-4">
         <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
+          <Label htmlFor="title-noteform">Title</Label> {/* Unique ID for label */}
           <Input
-            id="title"
+            id="title-noteform"
             value={title}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
             placeholder="Note Title"
@@ -87,9 +106,9 @@ function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="content">Content</Label>
+          <Label htmlFor="content-noteform">Content</Label> {/* Unique ID for label */}
           <Textarea
-            id="content"
+            id="content-noteform"
             value={content}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
             placeholder="Write your note here..."
@@ -99,9 +118,9 @@ function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="tags">Tags (comma-separated)</Label>
+          <Label htmlFor="tags-noteform">Tags (comma-separated)</Label> {/* Unique ID for label */}
           <Input
-            id="tags"
+            id="tags-noteform"
             value={tags}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTags(e.target.value)}
             placeholder="e.g., work, personal, important"

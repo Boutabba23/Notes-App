@@ -1,5 +1,4 @@
 // src/components/layout/Navbar.tsx
-import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
