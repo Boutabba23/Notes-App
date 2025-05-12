@@ -83,7 +83,7 @@ function Navbar() {
           {isAuthenticated && user ? (
             <>
               {/* Desktop/Tablet "New Note" Button (visible on 'sm' and larger) */}
-              <Button variant="custom" size="sm"  onClick={() => openNoteForm()} className="hidden  bg-primary sm:inline-flex  text-white">
+              <Button variant="custom" size="sm"  onClick={() => openNoteForm()} className="hidden hover:cursor-pointer hover:bg-secondary bg-primary sm:inline-flex  text-white">
                 <PlusCircle className="mr-2 h-4 w-4 text-white" /> New Note
               </Button>
 

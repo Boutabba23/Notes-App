@@ -116,7 +116,7 @@ function DashboardPage() {
       {!isLoading && allNotes.length === 0 && !searchTerm.trim() && (
         <div className="text-center py-10">
           <p className="text-xl text-muted-foreground mb-4">You don't have any notes yet.</p>
-          <Button onClick={() => openNoteForm(null)} size="lg">
+          <Button className='hover:cursor-pointer hover:bg-secondary' onClick={() => openNoteForm(null)} size="lg">
             <PlusCircle className="mr-2 h-5 w-5" /> Create Your First Note
           </Button>
         </div>
