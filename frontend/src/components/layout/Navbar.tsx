@@ -63,12 +63,12 @@ function Navbar() {
 
         {/* Search Bar */}
         {displayMainSearchBar && (
-          <div className="relative flex-grow max-w-xs sm:max-w-sm md:max-w-md hidden sm:flex mx-auto">
+          <div className="relative flex-grow  max-w-xs sm:max-w-sm md:max-w-md hidden sm:flex mx-auto">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
+            <Input 
               type="search"
               placeholder="Search notes..."
-              className="pl-10 w-full text-sm"
+              className="pl-10 w-full bg-gray-50 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               aria-label="Search notes"
@@ -83,8 +83,8 @@ function Navbar() {
           {isAuthenticated && user ? (
             <>
               {/* Desktop/Tablet "New Note" Button (visible on 'sm' and larger) */}
-              <Button variant="custom" size="sm" onClick={() => openNoteForm()} className="hidden sm:inline-flex text-black">
-                <PlusCircle className="mr-2 h-4 w-4 text-black" /> New Note
+              <Button variant="custom" size="sm"  onClick={() => openNoteForm()} className="hidden  bg-primary sm:inline-flex  text-white">
+                <PlusCircle className="mr-2 h-4 w-4 text-white" /> New Note
               </Button>
 
               {/* Desktop/Tablet User Menu (triggered by Avatar) */}

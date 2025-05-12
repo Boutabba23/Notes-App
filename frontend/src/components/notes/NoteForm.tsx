@@ -102,6 +102,7 @@ function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
             placeholder="Note Title"
             disabled={isLoading}
+            className='bg-gray-50'
             required
           />
         </div>
@@ -114,6 +115,7 @@ function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
             placeholder="Write your note here..."
             rows={5}
             disabled={isLoading}
+            className='bg-gray-50 min-h-[120px] max-h-[200px] resize-y overflow-y-auto'
             required
           />
         </div>
@@ -121,6 +123,7 @@ function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
           <Label htmlFor="tags-noteform">Tags (comma-separated)</Label> {/* Unique ID for label */}
           <Input
             id="tags-noteform"
+            className='bg-gray-50'
             value={tags}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTags(e.target.value)}
             placeholder="e.g., work, personal, important"
@@ -129,11 +132,11 @@ function NoteForm({ onSubmit, initialData, onFinished }: NoteFormProps) {
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline" onClick={onFinished} disabled={isLoading}>
+            <Button type="button" className='hover:cursor-pointer' variant="outline" onClick={onFinished} disabled={isLoading}>
               Cancel
             </Button>
           </DialogClose>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" className='hover:cursor-pointer hover:bg-secondary'  disabled={isLoading}>
             {isLoading ? (initialData ? 'Saving...' : 'Creating...') : (initialData ? 'Save Changes' : 'Create Note')}
           </Button>
         </DialogFooter>

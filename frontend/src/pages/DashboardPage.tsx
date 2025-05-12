@@ -101,9 +101,7 @@ function DashboardPage() {
           <h1 className="text-3xl font-bold">My Notes</h1>
           {user && <p className="text-muted-foreground">Welcome back, {user.username}!</p>}
         </div>
-        <Button onClick={() => openNoteForm(null)} className="flex-shrink-0">
-          <PlusCircle className="mr-2 h-4 w-4" /> Create Note
-        </Button>
+     
       </div>
 
       {/* Loading state: Displayed when initially fetching notes */}
